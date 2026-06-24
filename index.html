@@ -153,8 +153,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ADMIN_PASSWORD = "epg2024";
 
 const REGIONS = {
-  "Europe": ["Germany","Italy","Spain","Montenegro","Serbia"],
-  "Asia": ["Thailand","Laos","Cambodia","Mongolia"]
+  "Europe": ["Germany","Italy","Spain","Montenegro","Serbia","France","England","Portugal","Netherlands","Belgium","Croatia","Austria","Switzerland","Turkey","Poland","Czech Republic","Greece","Denmark","Sweden","Norway"],
+  "Asia": ["Thailand","Laos","Cambodia","Mongolia","Japan","South Korea","China","Vietnam","Myanmar","Indonesia","Malaysia","Philippines","India","Singapore"],
+  "Oceania": ["Australia","New Zealand","Fiji"],
+  "Middle East": ["UAE","Saudi Arabia","Qatar","Bahrain","Oman","Kuwait","Iran","Iraq","Jordan"],
+  "North America": ["USA","Canada","Mexico"],
+  "South America": ["Brazil","Argentina","Chile","Colombia","Uruguay","Paraguay","Peru","Ecuador","Bolivia","Venezuela"],
+  "Africa": ["South Africa","Nigeria","Ghana","Egypt","Morocco","Cameroon","Senegal","Tunisia","Algeria","Kenya"]
 };
 
 const DEFAULT_PLAYERS = [
@@ -425,12 +430,17 @@ function renderFormModal() {
             <input id="f_nationality" value="${esc(p.nationality)}">
           </div>
           <div class="form-group">
+            <label>Region</label>
+            <select id="f_region" onchange="updateCountryList()">
+              <option value="">— Select Region —</option>
+              ${Object.keys(REGIONS).map(r => `<option value="${r}" ${getRegion(p.currentCountry)===r?'selected':''}>${r}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
             <label>Current Country</label>
             <select id="f_country">
-              <option value="">— Select —</option>
-              ${Object.entries(REGIONS).map(([region, countries]) =>
-                `<optgroup label="${region}">${countries.map(c => `<option value="${c}" ${p.currentCountry===c?'selected':''}>${c}</option>`).join('')}</optgroup>`
-              ).join('')}
+              <option value="">— Select Country —</option>
+              ${(()=>{ const r=getRegion(p.currentCountry); const list=r!=='Other'&&REGIONS[r]?REGIONS[r]:Object.values(REGIONS).flat(); return list.map(c=>`<option value="${c}" ${p.currentCountry===c?'selected':''}>${c}</option>`).join(''); })()}
             </select>
           </div>
           <div class="form-group">
@@ -585,6 +595,13 @@ window.handlePhoto = function(input) {
     }
   };
   reader.readAsDataURL(file);
+};
+
+window.updateCountryList = function() {
+  const region = document.getElementById('f_region').value;
+  const sel = document.getElementById('f_country');
+  const countries = region && REGIONS[region] ? REGIONS[region] : Object.values(REGIONS).flat();
+  sel.innerHTML = '<option value="">— Select Country —</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
 };
 
 window.addCareer = function() {
