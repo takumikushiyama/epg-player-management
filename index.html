@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPG LTD. — Player Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;--bg4:#22223a;--gold:#d4a843;--gold2:#e8c36a;--gold3:#f0d88a;--text:#e8e8f0;--text2:#a0a0b8;--text3:#6a6a82;--red:#e84057;--green:#43d480;--border:#2a2a40}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+h1,h2,h3,h4,h5{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px}
+.app{display:flex;flex-direction:column;min-height:100vh}
+
+/* Header */
+header{background:linear-gradient(135deg,#0d0d15 0%,#161628 100%);border-bottom:2px solid var(--gold);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{width:42px;height:42px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:18px;color:var(--bg)}
+.logo h1{font-size:22px;color:var(--gold);letter-spacing:3px}
+.logo span{font-size:11px;color:var(--text2);letter-spacing:2px;display:block;margin-top:-2px}
+header nav{display:flex;gap:12px;align-items:center}
+header nav button{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 18px;border-radius:6px;cursor:pointer;font-family:'Oswald';font-size:13px;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+header nav button:hover,header nav button.active{border-color:var(--gold);color:var(--gold)}
+
+/* Main */
+main{flex:1;padding:32px;max-width:1400px;margin:0 auto;width:100%}
+.section-title{font-size:28px;color:var(--gold);margin-bottom:8px}
+.section-sub{color:var(--text2);font-size:14px;margin-bottom:32px}
+
+/* Region / Country Group */
+.region-group{margin-bottom:48px}
+.region-header{font-size:24px;color:var(--gold);margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--gold);letter-spacing:3px}
+.country-group{margin-bottom:32px;padding-left:16px}
+.country-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.country-header h3{font-size:18px;color:var(--text);letter-spacing:2px}
+.country-badge{background:var(--gold);color:var(--bg);font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;font-family:'Oswald'}
+
+/* Player Cards */
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px}
+.player-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .3s;position:relative}
+.player-card:hover{border-color:var(--gold);transform:translateY(-4px);box-shadow:0 8px 30px rgba(212,168,67,.12)}
+.player-photo{width:100%;aspect-ratio:3/4;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.player-photo img{width:100%;height:100%;object-fit:cover}
+.player-photo .silhouette{font-size:64px;color:var(--text3);opacity:.5}
+.player-info{padding:14px}
+.player-info h4{font-size:15px;color:var(--text);margin-bottom:4px}
+.player-info p{font-size:12px;color:var(--text2)}
+.player-pos{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.7);color:var(--gold);font-family:'Oswald';font-size:12px;padding:3px 8px;border-radius:4px;letter-spacing:1px}
+
+/* Detail Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--bg3);border:none;color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:5}
+.modal-close:hover{background:var(--red);color:#fff}
+.modal-top{display:flex;gap:24px;padding:28px;border-bottom:1px solid var(--border)}
+.modal-photo{width:160px;height:200px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--bg3);display:flex;align-items:center;justify-content:center}
+.modal-photo img{width:100%;height:100%;object-fit:cover}
+.modal-photo .silhouette{font-size:80px;color:var(--text3);opacity:.5}
+.modal-meta{flex:1}
+.modal-meta h2{font-size:26px;color:var(--gold);margin-bottom:12px}
+.meta-row{display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:14px;color:var(--text2)}
+.meta-row strong{color:var(--text);min-width:90px}
+.modal-section{padding:20px 28px}
+.modal-section h3{font-size:16px;color:var(--gold);margin-bottom:14px;letter-spacing:2px}
+.career-list{list-style:none}
+.career-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.career-item:last-child{border-bottom:none}
+.career-dot{width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.career-item:not(:first-child) .career-dot{background:var(--text3)}
+.career-club{font-weight:500;color:var(--text)}
+.career-period{font-size:13px;color:var(--text2);margin-left:auto}
+.modal-links{display:flex;gap:12px;padding:0 28px 24px;flex-wrap:wrap}
+.modal-links a{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;transition:all .2s}
+.btn-video{background:#e8232850;color:#ff4455;border:1px solid #e8232840}
+.btn-video:hover{background:#e8232870}
+.btn-tm{background:var(--gold);color:var(--bg);font-weight:600}
+.btn-tm:hover{background:var(--gold2)}
+
+/* Admin */
+.admin-bar{background:var(--bg3);border:1px solid var(--gold);border-radius:10px;padding:16px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.admin-bar h3{color:var(--gold);font-size:16px}
+.btn{padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-family:'Oswald';font-size:14px;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+.btn-gold{background:var(--gold);color:var(--bg)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{opacity:.8}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Admin Form */
+.form-modal .modal{max-width:600px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:24px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-family:'Oswald'}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:14px;font-family:'Inter'}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--gold)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;gap:12px;justify-content:flex-end;padding:0 24px 24px}
+
+/* Career Editor */
+.career-editor{display:flex;flex-direction:column;gap:8px}
+.career-entry{display:flex;gap:8px;align-items:center}
+.career-entry input{flex:1}
+.career-entry button{background:var(--red);color:#fff;border:none;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px}
+.add-career{background:var(--bg3);border:1px dashed var(--border);color:var(--text2);padding:8px;border-radius:6px;cursor:pointer;font-size:13px;text-align:center}
+.add-career:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Login */
+.login-box{max-width:380px;margin:80px auto;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center}
+.login-box h2{color:var(--gold);margin-bottom:8px;font-size:24px}
+.login-box p{color:var(--text2);font-size:14px;margin-bottom:24px}
+.login-box input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:8px;font-size:15px;margin-bottom:16px}
+.login-box input:focus{outline:none;border-color:var(--gold)}
+.login-error{color:var(--red);font-size:13px;margin-bottom:12px}
+
+/* Delete confirm */
+.delete-actions{display:flex;gap:8px}
+
+/* Photo upload */
+.photo-upload{position:relative;width:120px;height:120px;border-radius:12px;overflow:hidden;background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;border:2px dashed var(--border);margin:0 auto 12px}
+.photo-upload:hover{border-color:var(--gold)}
+.photo-upload img{width:100%;height:100%;object-fit:cover}
+.photo-upload input{display:none}
+.photo-upload .upload-label{text-align:center;color:var(--text3);font-size:12px}
+
+/* Footer */
+footer{text-align:center;padding:24px;border-top:1px solid var(--border);color:var(--text3);font-size:12px}
+
+/* Responsive */
+@media(max-width:768px){
+  header{padding:12px 16px;flex-direction:column;gap:12px}
+  main{padding:20px 16px}
+  .player-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+  .modal-top{flex-direction:column;align-items:center;text-align:center}
+  .form-grid{grid-template-columns:1fr}
+  .meta-row{flex-direction:column;gap:2px}
+}
+@media(max-width:480px){
+  .player-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://jgskvkrsioplsimaupvj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_G8dxS4_8zEQysUDhUXRCNQ_3hf1vR9r";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ADMIN_PASSWORD = "epg2024";
+
+const REGIONS = {
+  "Europe": ["Germany","Italy","Spain","Montenegro","Serbia"],
+  "Asia": ["Thailand","Laos","Cambodia","Mongolia"]
+};
+
+const DEFAULT_PLAYERS = [
+  {
+    id:"p1",name:"Kenji Tanaka",photo:"",dateOfBirth:"2001-03-12",nationality:"Japan",
+    currentCountry:"Spain",currentClub:"Villarreal CF B",position:"MF",height:172,weight:67,
+    career:[{club:"Villarreal CF B",period:"2024–Present"},{club:"Cerezo Osaka U18",period:"2019–2024"}],
+    videoUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",transfermarktUrl:"https://www.transfermarkt.com/"
+  },
+  {
+    id:"p2",name:"Ryo Hashimoto",photo:"",dateOfBirth:"2002-07-22",nationality:"Japan",
+    currentCountry:"Germany",currentClub:"TSV 1860 München II",position:"FW",height:178,weight:72,
+    career:[{club:"TSV 1860 München II",period:"2024–Present"},{club:"Kashima Antlers Youth",period:"2020–2024"}],
+    videoUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",transfermarktUrl:"https://www.transfermarkt.com/"
+  },
+  {
+    id:"p3",name:"Yuto Nakamura",photo:"",dateOfBirth:"2000-11-05",nationality:"Japan",
+    currentCountry:"Italy",currentClub:"US Triestina",position:"DF",height:181,weight:75,
+    career:[{club:"US Triestina",period:"2023–Present"},{club:"Yokohama F. Marinos Youth",period:"2018–2023"}],
+    videoUrl:"",transfermarktUrl:"https://www.transfermarkt.com/"
+  },
+  {
+    id:"p4",name:"Takumi Saito",photo:"",dateOfBirth:"2003-01-30",nationality:"Japan",
+    currentCountry:"Montenegro",currentClub:"FK Budućnost Podgorica",position:"GK",height:187,weight:80,
+    career:[{club:"FK Budućnost Podgorica",period:"2024–Present"},{club:"Sanfrecce Hiroshima Youth",period:"2020–2024"}],
+    videoUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",transfermarktUrl:""
+  },
+  {
+    id:"p5",name:"Soma Ito",photo:"",dateOfBirth:"2001-09-18",nationality:"Japan",
+    currentCountry:"Thailand",currentClub:"Buriram United",position:"MF",height:170,weight:65,
+    career:[{club:"Buriram United",period:"2024–Present"},{club:"Vissel Kobe Academy",period:"2019–2024"}],
+    videoUrl:"",transfermarktUrl:"https://www.transfermarkt.com/"
+  }
+];
+
+let state = {
+  page: "home",
+  players: [],
+  isAdmin: false,
+  selectedPlayer: null,
+  showForm: false,
+  editingPlayer: null,
+  loginError: ""
+};
+
+function toLocal(row) {
+  return {
+    id: row.id, name: row.name, photo: row.photo || '',
+    dateOfBirth: row.date_of_birth || '', nationality: row.nationality || '',
+    currentCountry: row.current_country || '', currentClub: row.current_club || '',
+    position: row.position || '', height: row.height, weight: row.weight,
+    career: row.career || [], videoUrl: row.video_url || '',
+    transfermarktUrl: row.transfermarkt_url || ''
+  };
+}
+
+function toRow(p) {
+  return {
+    name: p.name, photo: p.photo || '', date_of_birth: p.dateOfBirth || null,
+    nationality: p.nationality, current_country: p.currentCountry,
+    current_club: p.currentClub, position: p.position,
+    height: p.height || null, weight: p.weight || null,
+    career: p.career || [], video_url: p.videoUrl || '',
+    transfermarkt_url: p.transfermarktUrl || ''
+  };
+}
+
+async function loadPlayers() {
+  const { data, error } = await sb.from('players').select('*').order('created_at');
+  if (error) { console.error(error); return; }
+  state.players = data.map(toLocal);
+  render();
+}
+
+function uid() {
+  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+function calcAge(dob) {
+  if (!dob) return "";
+  const d = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--;
+  return age;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function getRegion(country) {
+  for (const [region, countries] of Object.entries(REGIONS)) {
+    if (countries.includes(country)) return region;
+  }
+  return "Other";
+}
+
+function groupByRegionAndCountry(players) {
+  const regionOrder = ["Europe","Asia","Other"];
+  const result = {};
+  players.forEach(p => {
+    const region = getRegion(p.currentCountry || "Unknown");
+    const country = p.currentCountry || "Unknown";
+    if (!result[region]) result[region] = {};
+    if (!result[region][country]) result[region][country] = [];
+    result[region][country].push(p);
+  });
+  return regionOrder
+    .filter(r => result[r])
+    .map(r => [r, Object.entries(result[r]).sort((a,b) => a[0].localeCompare(b[0]))]);
+}
+
+function renderSilhouette() {
+  return `<svg class="silhouette" viewBox="0 0 80 100" width="64" height="80" fill="currentColor"><circle cx="40" cy="28" r="18"/><ellipse cx="40" cy="82" rx="30" ry="22"/></svg>`;
+}
+
+function renderPhoto(photo, cls) {
+  if (photo) return `<img src="${esc(photo)}" alt="Player photo">`;
+  return renderSilhouette();
+}
+
+function renderPlayerCard(p) {
+  return `
+    <div class="player-card" onclick="openPlayer('${p.id}')">
+      <div class="player-photo">${renderPhoto(p.photo)}</div>
+      <span class="player-pos">${esc(p.position)}</span>
+      <div class="player-info">
+        <h4>${esc(p.name)}</h4>
+        <p>${esc(p.currentClub)}</p>
+      </div>
+    </div>`;
+}
+
+function renderHome() {
+  const regionGroups = groupByRegionAndCountry(state.players);
+  let html = `
+    <div class="section-title">Our Players</div>
+    <div class="section-sub">Professional football players managed by EPG LTD.</div>`;
+
+  if (state.isAdmin) {
+    html += `
+      <div class="admin-bar">
+        <h3>⚡ Admin Mode Active</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="openForm()">+ Add Player</button>
+          <button class="btn btn-outline" onclick="logout()">Logout</button>
+        </div>
+      </div>`;
+  }
+
+  if (regionGroups.length === 0) {
+    html += `<p style="color:var(--text2);text-align:center;padding:60px 0">No players registered yet.</p>`;
+  }
+
+  regionGroups.forEach(([region, countries]) => {
+    html += `<div class="region-group"><h2 class="region-header">${esc(region)}</h2>`;
+    countries.forEach(([country, players]) => {
+      html += `
+        <div class="country-group">
+          <div class="country-header">
+            <h3>${esc(country)}</h3>
+            <span class="country-badge">${players.length}</span>
+          </div>
+          <div class="player-grid">
+            ${players.map(renderPlayerCard).join('')}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+
+  return html;
+}
+
+function renderDetail() {
+  const p = state.selectedPlayer;
+  if (!p) return '';
+  const age = calcAge(p.dateOfBirth);
+  return `
+    <div class="modal-overlay open" onclick="if(event.target===this)closePlayer()">
+      <div class="modal">
+        <button class="modal-close" onclick="closePlayer()">✕</button>
+        <div class="modal-top">
+          <div class="modal-photo">${renderPhoto(p.photo)}</div>
+          <div class="modal-meta">
+            <h2>${esc(p.name)}</h2>
+            <div class="meta-row"><strong>Born:</strong> ${esc(p.dateOfBirth)}${age ? ` (${age} yrs)` : ''}</div>
+            <div class="meta-row"><strong>Nationality:</strong> ${esc(p.nationality)}</div>
+            <div class="meta-row"><strong>Club:</strong> ${esc(p.currentClub)}</div>
+            <div class="meta-row"><strong>Country:</strong> ${esc(p.currentCountry)}</div>
+            <div class="meta-row"><strong>Position:</strong> ${esc(p.position)}</div>
+            <div class="meta-row"><strong>Height:</strong> ${p.height ? p.height + ' cm' : '—'}</div>
+            <div class="meta-row"><strong>Weight:</strong> ${p.weight ? p.weight + ' kg' : '—'}</div>
+          </div>
+        </div>
+        ${p.career && p.career.length ? `
+        <div class="modal-section">
+          <h3>Career History</h3>
+          <ul class="career-list">
+            ${p.career.map((c,i) => `
+              <li class="career-item">
+                <span class="career-dot"></span>
+                <span class="career-club">${esc(c.club)}</span>
+                <span class="career-period">${esc(c.period)}</span>
+              </li>`).join('')}
+          </ul>
+        </div>` : ''}
+        <div class="modal-links">
+          ${p.videoUrl ? `<a href="${esc(p.videoUrl)}" target="_blank" class="btn-video">▶ Highlight Video</a>` : ''}
+          ${p.transfermarktUrl ? `<a href="${esc(p.transfermarktUrl)}" target="_blank" class="btn-tm">Transfermarkt Profile</a>` : ''}
+          ${state.isAdmin ? `
+            <button class="btn btn-outline" onclick="editPlayer('${p.id}')" style="margin-left:auto">Edit</button>
+            <button class="btn btn-red" onclick="confirmDelete('${p.id}')">Delete</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderLogin() {
+  return `
+    <div class="login-box">
+      <h2>Admin Login</h2>
+      <p>Enter the admin password to manage players.</p>
+      ${state.loginError ? `<div class="login-error">${esc(state.loginError)}</div>` : ''}
+      <input type="password" id="adminPass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn btn-gold" style="width:100%" onclick="doLogin()">Login</button>
+      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="state.page='home';render()">Back</button>
+    </div>`;
+}
+
+function renderFormModal() {
+  const p = state.editingPlayer || {
+    id:'',name:'',photo:'',dateOfBirth:'',nationality:'Japan',
+    currentCountry:'',currentClub:'',position:'MF',height:'',weight:'',
+    career:[{club:'',period:''}],videoUrl:'',transfermarktUrl:''
+  };
+  const isEdit = !!state.editingPlayer;
+  const careers = (p.career && p.career.length) ? p.career : [{club:'',period:''}];
+
+  return `
+    <div class="modal-overlay open form-modal" onclick="if(event.target===this)closeForm()">
+      <div class="modal">
+        <button class="modal-close" onclick="closeForm()">✕</button>
+        <div style="padding:24px 24px 0;border-bottom:1px solid var(--border)">
+          <h2 style="color:var(--gold);font-size:22px;padding-bottom:16px">${isEdit ? 'Edit Player' : 'Add New Player'}</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group full" style="align-items:center">
+            <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+              ${p.photo ? `<img src="${esc(p.photo)}" id="photoPreview">` : `<div class="upload-label" id="photoPreview">Click to<br>upload photo</div>`}
+              <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)">
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Full Name</label>
+            <input id="f_name" value="${esc(p.name)}">
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input id="f_dob" type="date" value="${esc(p.dateOfBirth)}">
+          </div>
+          <div class="form-group">
+            <label>Nationality</label>
+            <input id="f_nationality" value="${esc(p.nationality)}">
+          </div>
+          <div class="form-group">
+            <label>Current Country</label>
+            <select id="f_country">
+              <option value="">— Select —</option>
+              ${Object.entries(REGIONS).map(([region, countries]) =>
+                `<optgroup label="${region}">${countries.map(c => `<option value="${c}" ${p.currentCountry===c?'selected':''}>${c}</option>`).join('')}</optgroup>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Current Club</label>
+            <input id="f_club" value="${esc(p.currentClub)}">
+          </div>
+          <div class="form-group">
+            <label>Position</label>
+            <select id="f_position">
+              ${['GK','DF','MF','FW'].map(pos => `<option value="${pos}" ${p.position===pos?'selected':''}>${pos}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Height (cm)</label>
+            <input id="f_height" type="number" value="${p.height||''}">
+          </div>
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input id="f_weight" type="number" value="${p.weight||''}">
+          </div>
+          <div class="form-group full">
+            <label>Career History</label>
+            <div class="career-editor" id="careerEditor">
+              ${careers.map((c,i) => `
+                <div class="career-entry">
+                  <input placeholder="Club name" value="${esc(c.club)}" class="ce-club">
+                  <input placeholder="Period" value="${esc(c.period)}" class="ce-period" style="max-width:160px">
+                  <button onclick="removeCareer(this)">✕</button>
+                </div>`).join('')}
+              <div class="add-career" onclick="addCareer()">+ Add Club</div>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Highlight Video URL</label>
+            <input id="f_video" value="${esc(p.videoUrl)}" placeholder="https://youtube.com/...">
+          </div>
+          <div class="form-group full">
+            <label>Transfermarkt URL</label>
+            <input id="f_tm" value="${esc(p.transfermarktUrl)}" placeholder="https://www.transfermarkt.com/...">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="closeForm()">Cancel</button>
+          <button class="btn btn-gold" onclick="savePlayer('${esc(p.id)}')">${isEdit ? 'Update' : 'Add'} Player</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+let _tempPhoto = null;
+
+function render() {
+  let html = `
+    <header>
+      <div class="logo">
+        <div class="logo-icon">EPG</div>
+        <div>
+          <h1>EPG LTD.</h1>
+          <span>Football Player Management</span>
+        </div>
+      </div>
+      <nav>
+        <button class="${state.page==='home'?'active':''}" onclick="state.page='home';render()">Players</button>
+        ${state.isAdmin
+          ? `<button class="active" style="border-color:var(--gold);color:var(--gold)">Admin ✓</button>`
+          : `<button onclick="state.page='login';render()">Admin</button>`
+        }
+      </nav>
+    </header>
+    <main>
+      ${state.page === 'login' && !state.isAdmin ? renderLogin() : renderHome()}
+    </main>
+    <footer>© ${new Date().getFullYear()} EPG LTD. — International Football Player Agency</footer>`;
+
+  if (state.selectedPlayer) html += renderDetail();
+  if (state.showForm) html += renderFormModal();
+
+  document.getElementById('app').innerHTML = html;
+}
+
+window.openPlayer = function(id) {
+  state.selectedPlayer = state.players.find(p => p.id === id);
+  render();
+};
+
+window.closePlayer = function() {
+  state.selectedPlayer = null;
+  render();
+};
+
+window.doLogin = function() {
+  const pass = document.getElementById('adminPass')?.value;
+  if (pass === ADMIN_PASSWORD) {
+    state.isAdmin = true;
+    state.page = 'home';
+    state.loginError = '';
+  } else {
+    state.loginError = 'Incorrect password. Please try again.';
+  }
+  render();
+};
+
+window.logout = function() {
+  state.isAdmin = false;
+  render();
+};
+
+window.openForm = function(player) {
+  state.editingPlayer = player || null;
+  state.showForm = true;
+  _tempPhoto = player ? player.photo : null;
+  render();
+};
+
+window.closeForm = function() {
+  state.showForm = false;
+  state.editingPlayer = null;
+  _tempPhoto = null;
+  render();
+};
+
+window.editPlayer = function(id) {
+  const p = state.players.find(pl => pl.id === id);
+  if (p) {
+    state.selectedPlayer = null;
+    openForm(JSON.parse(JSON.stringify(p)));
+  }
+};
+
+window.confirmDelete = async function(id) {
+  if (confirm('Are you sure you want to delete this player?')) {
+    const { error } = await sb.from('players').delete().eq('id', id);
+    if (error) { alert('Delete failed: ' + error.message); return; }
+    state.selectedPlayer = null;
+    await loadPlayers();
+  }
+};
+
+window.handlePhoto = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    _tempPhoto = e.target.result;
+    const preview = document.getElementById('photoPreview');
+    if (preview) {
+      if (preview.tagName === 'IMG') {
+        preview.src = _tempPhoto;
+      } else {
+        preview.outerHTML = `<img src="${_tempPhoto}" id="photoPreview">`;
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
+window.addCareer = function() {
+  const editor = document.getElementById('careerEditor');
+  const addBtn = editor.querySelector('.add-career');
+  const entry = document.createElement('div');
+  entry.className = 'career-entry';
+  entry.innerHTML = `
+    <input placeholder="Club name" class="ce-club">
+    <input placeholder="Period" class="ce-period" style="max-width:160px">
+    <button onclick="removeCareer(this)">✕</button>`;
+  editor.insertBefore(entry, addBtn);
+};
+
+window.removeCareer = function(btn) {
+  const entries = document.querySelectorAll('.career-entry');
+  if (entries.length > 1) btn.parentElement.remove();
+};
+
+window.savePlayer = async function(editId) {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+
+  const clubs = document.querySelectorAll('.ce-club');
+  const periods = document.querySelectorAll('.ce-period');
+  const career = [];
+  clubs.forEach((c,i) => {
+    if (c.value.trim()) career.push({ club: c.value.trim(), period: periods[i]?.value.trim() || '' });
+  });
+
+  const local = {
+    name,
+    photo: _tempPhoto || '',
+    dateOfBirth: document.getElementById('f_dob').value,
+    nationality: document.getElementById('f_nationality').value.trim(),
+    currentCountry: document.getElementById('f_country').value.trim(),
+    currentClub: document.getElementById('f_club').value.trim(),
+    position: document.getElementById('f_position').value,
+    height: parseInt(document.getElementById('f_height').value) || null,
+    weight: parseInt(document.getElementById('f_weight').value) || null,
+    career,
+    videoUrl: document.getElementById('f_video').value.trim(),
+    transfermarktUrl: document.getElementById('f_tm').value.trim()
+  };
+
+  const row = toRow(local);
+
+  if (editId) {
+    const { error } = await sb.from('players').update(row).eq('id', editId);
+    if (error) { alert('Update failed: ' + error.message); return; }
+  } else {
+    const { error } = await sb.from('players').insert(row);
+    if (error) { alert('Insert failed: ' + error.message); return; }
+  }
+
+  await loadPlayers();
+  state.showForm = false;
+  state.editingPlayer = null;
+  _tempPhoto = null;
+  render();
+};
+
+render();
+loadPlayers();
+</script>
+</body>
+</html>
